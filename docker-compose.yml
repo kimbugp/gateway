@@ -1,0 +1,43 @@
+version: "2.1"
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx-service
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx.conf
+      - ./cinema.html:/usr/share/nginx/html/cinema.html
+    ports:
+      - 80:80
+      - 8000:8000
+      - 433:433
+
+  database:
+    restart: always
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_pass
+      - POSTGRES_DB=cinema
+    ports:
+      - "5433:5432"
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "cinema", "-U", "postgres"]
+      timeout: 5s
+      retries: 1
+  cinema_web_service:
+    build: https://github.com/kimbugp/movie-bookings.git
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_pass@database:5432/cinema
+      - DEBUG=False
+      - FLASK_APP=run.py
+      - FLASK_ENV=production
+    volumes:
+      - ./:/code/
+    depends_on:
+      database:
+        condition: service_healthy
+    command: gunicorn run:app -b 0.0.0.0:5000
