@@ -12,8 +12,8 @@ services:
       - my-network
     ports:
       - 80:80
-      - 8080:8080
       - 8081:8081
+      - 8080:8080
 
   apache:
     image: httpd:alpine
@@ -34,6 +34,8 @@ services:
       - "5432"
     networks:
       - my-network
+    volumes:
+      - ./database:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-d", "cinema", "-U", "postgres"]
       timeout: 1s
@@ -55,7 +57,8 @@ services:
         aliases:
           - flask-app
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     command: gunicorn run:app -b 0.0.0.0:5000
 
   movie_service:
@@ -74,7 +77,8 @@ services:
         aliases:
           - movie_service
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     command: gunicorn run:app -b 0.0.0.0:8000
 
 networks:
