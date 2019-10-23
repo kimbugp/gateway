@@ -42,6 +42,7 @@ services:
       retries: 1
 
   web_service:
+    container_name: web_service
     build: https://github.com/kimbugp/movie-bookings.git
     ports:
       - "5000:5000"
@@ -50,6 +51,7 @@ services:
       - DEBUG=False
       - FLASK_APP=run.py
       - FLASK_ENV=production
+      - SECRET_KEY=notsecret
     volumes:
       - ./:/code/
     networks:
@@ -59,7 +61,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    command: gunicorn run:app -b 0.0.0.0:5000
+    command: gunicorn run:app -b 0.0.0.0:5000 --log-level DEBUG
 
   movie_service:
     build: https://github.com/kimbugp/movie-bookings.git
@@ -70,6 +72,7 @@ services:
       - DEBUG=False
       - FLASK_APP=run.py
       - FLASK_ENV=production
+      - SECRET_KEY=notsecret
     volumes:
       - ./:/code/
     networks:
@@ -79,7 +82,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    command: gunicorn run:app -b 0.0.0.0:8000
+    command: gunicorn run:app -b 0.0.0.0:8000 --log-level DEBUG
 
 networks:
   my-network:
